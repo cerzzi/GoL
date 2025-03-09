@@ -3,11 +3,15 @@ const ctx = canvas.getContext('2d');
 const speedSlider = document.getElementById('speedSlider');
 
 // Grid settings
-const GRID_SIZE = 100; // change for larger or smaller grid
-let CELL_SIZE; 
+const GRID_SIZE = 100; // Change for larger or smaller grid
+let CELL_SIZE;
 let grid;
 let running = false;
 let lastUpdate = 0;
+
+// Themes array and current index
+const themes = ['nord-theme', 'dark-theme', 'black-yellow-theme'];
+let currentThemeIndex = 0;
 
 // Set canvas size based on window
 function resizeCanvas() {
@@ -20,12 +24,19 @@ function resizeCanvas() {
     drawGrid();
 }
 
-// Draw the grid
+// Draw the grid (theme-aware cell colors)
 function drawGrid() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const currentTheme = themes[currentThemeIndex];
     for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
-            ctx.fillStyle = grid[i][j] ? 'black' : 'white';
+            if (currentTheme === 'nord-theme') {
+                ctx.fillStyle = grid[i][j] ? '#88C0D0' : '#3B4252'; // Nord8 (live), Nord1 (dead)
+            } else if (currentTheme === 'dark-theme') {
+                ctx.fillStyle = grid[i][j] ? '#FFFFFF' : '#222222'; // White (live), Darker gray (dead)
+            } else if (currentTheme === 'black-yellow-theme') {
+                ctx.fillStyle = grid[i][j] ? '#FFFF00' : '#000000'; // Yellow (live), Black (dead)
+            }
             ctx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
         }
     }
@@ -66,7 +77,7 @@ function nextGeneration() {
 // Animation loop with speed control
 function update(timestamp) {
     if (!running) return;
-    const delay = 550 - parseInt(speedSlider.value)
+    const delay = 550 - parseInt(speedSlider.value);
     if (timestamp - lastUpdate >= delay) {
         nextGeneration();
         drawGrid();
@@ -102,6 +113,40 @@ function randomizeGrid() {
     const DENSITY = 0.3; // density control (0.1 slow, 0.5 chaotic)
     grid = grid.map(row => row.map(() => Math.random() < DENSITY ? 1 : 0));
     drawGrid();
+}
+
+// Spawn Gosper Glider Gun
+function spawnGliderGun() {
+    stopSimulation();
+    grid = new Array(GRID_SIZE).fill().map(() => new Array(GRID_SIZE).fill(0));
+    const gunPattern = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ];
+    const startX = 10;
+    const startY = 10;
+    for (let i = 0; i < gunPattern.length; i++) {
+        for (let j = 0; j < gunPattern[i].length; j++) {
+            if (startX + i < GRID_SIZE && startY + j < GRID_SIZE) {
+                grid[startX + i][startY + j] = gunPattern[i][j];
+            }
+        }
+    }
+    drawGrid();
+}
+
+// Change theme
+function changeTheme() {
+    currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+    document.body.className = themes[currentThemeIndex];
+    drawGrid(); // Redraw to update cell colors
 }
 
 // Mouse click to toggle cells
