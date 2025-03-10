@@ -1,9 +1,11 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const speedSlider = document.getElementById('speedSlider');
+const volumeSlider = document.getElementById('volumeSlider');
+const audioElement = document.getElementById('bpmAudio');
 
 // Grid settings
-const GRID_SIZE = 100; // Change for larger or smaller grid
+const GRID_SIZE = 100;
 let CELL_SIZE;
 let grid;
 let running = false;
@@ -12,6 +14,12 @@ let lastUpdate = 0;
 // Themes array and current index
 const themes = ['nord-theme', 'dark-theme', 'black-yellow-theme'];
 let currentThemeIndex = 0;
+
+// Audio context setup (initialized only when needed)
+let audioContext, source, analyser, frequencyData, bufferLength;
+let lastPeakTime = 0;
+const peakCooldown = 150; // Minimum time (ms) between peaks
+const bassThreshold = 150; // Threshold for bass frequency energy
 
 // Set canvas size based on window
 function resizeCanvas() {
@@ -31,11 +39,11 @@ function drawGrid() {
     for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
             if (currentTheme === 'nord-theme') {
-                ctx.fillStyle = grid[i][j] ? '#88C0D0' : '#3B4252'; // Nord8 (live), Nord1 (dead)
+                ctx.fillStyle = grid[i][j] ? '#88C0D0' : '#3B4252';
             } else if (currentTheme === 'dark-theme') {
-                ctx.fillStyle = grid[i][j] ? '#FFFFFF' : '#222222'; // White (live), Darker gray (dead)
+                ctx.fillStyle = grid[i][j] ? '#FFFFFF' : '#222222';
             } else if (currentTheme === 'black-yellow-theme') {
-                ctx.fillStyle = grid[i][j] ? '#FFFF00' : '#000000'; // Yellow (live), Black (dead)
+                ctx.fillStyle = grid[i][j] ? '#FFFF00' : '#000000';
             }
             ctx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
         }
@@ -86,7 +94,7 @@ function update(timestamp) {
     requestAnimationFrame(update);
 }
 
-// Start simulation
+// Start simulation (no music)
 function startSimulation() {
     if (!running) {
         running = true;
@@ -95,22 +103,50 @@ function startSimulation() {
     }
 }
 
+// Start party mode (with music and BPM detection)
+function startParty() {
+    if (!running) {
+        running = true;
+        lastUpdate = performance.now();
+        requestAnimationFrame(update);
+
+        // Initialize audio context if not already done
+        if (!audioContext) {
+            audioContext = new AudioContext();
+            source = audioContext.createMediaElementSource(audioElement);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            bufferLength = analyser.frequencyBinCount;
+            frequencyData = new Uint8Array(bufferLength);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+        }
+
+        // Start audio and beat detection
+        audioElement.volume = volumeSlider.value;
+        audioElement.play();
+        detectBassBeats();
+    }
+}
+
 // Stop simulation
 function stopSimulation() {
     running = false;
+    if (audioElement) audioElement.pause(); // Pause audio if playing
 }
 
-// Clear grid
+// Clear grid and reset music
 function clearGrid() {
     stopSimulation();
     grid = new Array(GRID_SIZE).fill().map(() => new Array(GRID_SIZE).fill(0));
+    if (audioElement) audioElement.currentTime = 0; // Reset music to start
     drawGrid();
 }
 
 // Randomize grid with a given density (0 to 1)
 function randomizeGrid() {
     stopSimulation();
-    const DENSITY = 0.3; // density control (0.1 slow, 0.5 chaotic)
+    const DENSITY = 0.3;
     grid = grid.map(row => row.map(() => Math.random() < DENSITY ? 1 : 0));
     drawGrid();
 }
@@ -142,12 +178,48 @@ function spawnGliderGun() {
     drawGrid();
 }
 
-// Change theme
+// Change theme manually
 function changeTheme() {
     currentThemeIndex = (currentThemeIndex + 1) % themes.length;
     document.body.className = themes[currentThemeIndex];
-    drawGrid(); // Redraw to update cell colors
+    drawGrid();
 }
+
+// Detect bass beats and change theme
+function detectBassBeats() {
+    if (!running || !audioContext) return;
+
+    analyser.getByteFrequencyData(frequencyData);
+    const currentTime = performance.now();
+
+    // Focus on bass frequencies (20–200 Hz)
+    const sampleRate = audioContext.sampleRate;
+    const freqPerBin = sampleRate / analyser.fftSize;
+    const bassRangeEnd = Math.floor(200 / freqPerBin);
+    let bassEnergy = 0;
+
+    for (let i = 0; i < bassRangeEnd; i++) {
+        bassEnergy += frequencyData[i];
+    }
+    bassEnergy /= bassRangeEnd;
+
+    if (
+        bassEnergy > bassThreshold &&
+        (currentTime - lastPeakTime) > peakCooldown
+    ) {
+        currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+        document.body.className = themes[currentThemeIndex];
+        drawGrid();
+        lastPeakTime = currentTime;
+    }
+
+    requestAnimationFrame(detectBassBeats);
+}
+
+// Volume control
+volumeSlider.addEventListener('input', () => {
+    audioElement.volume = volumeSlider.value;
+});
 
 // Mouse click to toggle cells
 canvas.addEventListener('click', (e) => {
@@ -159,6 +231,13 @@ canvas.addEventListener('click', (e) => {
         drawGrid();
     }
 });
+
+// Resume AudioContext on user interaction (required by browsers)
+document.addEventListener('click', () => {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+}, { once: true });
 
 // Resize canvas on window resize
 window.addEventListener('resize', resizeCanvas);

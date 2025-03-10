@@ -7,7 +7,7 @@ body {
     min-height: 100vh;
     margin: 0;
     font-family: Arial, sans-serif;
-    transition: background-color 0.3s, color 0.3s; /* Smooth theme transitions */
+    transition: background-color 0.3s, color 0.3s;
 }
 
 canvas {
@@ -72,38 +72,38 @@ input[type="range"]::-moz-range-thumb {
 
 /* Nord Theme */
 body.nord-theme {
-    background-color: #2E3440; /* Nord0 */
-    color: #D8DEE9; /* Nord4 */
+    background-color: #2E3440;
+    color: #D8DEE9;
 }
 
 .nord-theme canvas {
-    border-color: #4C566A; /* Nord3 */
+    border-color: #4C566A;
 }
 
 .nord-theme .controls button {
-    background-color: #5E81AC; /* Nord10 */
-    color: #ECEFF4; /* Nord6 */
+    background-color: #5E81AC;
+    color: #ECEFF4;
 }
 
 .nord-theme .controls button:hover {
-    background-color: #81A1C1; /* Nord9 */
+    background-color: #81A1C1;
 }
 
 .nord-theme input[type="range"] {
-    background: #4C566A; /* Nord3 */
+    background: #4C566A;
 }
 
 .nord-theme input[type="range"]::-webkit-slider-thumb {
-    background: #88C0D0; /* Nord8 */
+    background: #88C0D0;
 }
 
 .nord-theme input[type="range"]::-moz-range-thumb {
-    background: #88C0D0; /* Nord8 */
+    background: #88C0D0;
 }
 
 /* Dark Theme */
 body.dark-theme {
-    background-color: #1A1A1A; /* Dark gray-black */
+    background-color: #1A1A1A;
     color: #FFFFFF;
 }
 
@@ -135,7 +135,7 @@ body.dark-theme {
 /* Black & Yellow Theme */
 body.black-yellow-theme {
     background-color: #000000;
-    color: #FFFF00; /* Yellow */
+    color: #FFFF00;
 }
 
 .black-yellow-theme canvas {
@@ -148,7 +148,7 @@ body.black-yellow-theme {
 }
 
 .black-yellow-theme .controls button:hover {
-    background-color: #FFD700; /* Darker yellow */
+    background-color: #FFD700;
 }
 
 .black-yellow-theme input[type="range"] {
@@ -165,37 +165,31 @@ body.black-yellow-theme {
 
 /* Mobile optimization */
 @media (max-width: 600px) {
-   
     .controls {
-    flex-direction: column; 
-    gap: 10px;
-    padding: 10px;
-    align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        align-items: stretch;
     }
-   
     button {
-    padding: 15px 20px;
-    font-size: 18px; 
-    min-width: 100%; 
+        padding: 15px 20px;
+        font-size: 18px;
+        min-width: 100%;
     }
-   
     label {
-    font-size: 18px;
-    text-align: center;
+        font-size: 18px;
+        text-align: center;
     }
-   
     input[type="range"] {
-    width: 100%; 
-    height: 12px;
+        width: 100%;
+        height: 12px;
     }
-   
     input[type="range"]::-webkit-slider-thumb {
-    width: 25px;
-    height: 25px;
+        width: 25px;
+        height: 25px;
     }
-   
     input[type="range"]::-moz-range-thumb {
-    width: 25px;
-    height: 25px;
+        width: 25px;
+        height: 25px;
     }
-   }
+}
